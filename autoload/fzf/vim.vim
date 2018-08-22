@@ -504,7 +504,7 @@ endfunction
 " ------------------------------------------------------------------
 
 function! s:get_git_root()
-  let root = split(system('git rev-parse --show-toplevel'), '\n')[0]
+  let root = split(system('git -C "' . expand('%:p:h') . '" rev-parse --show-toplevel'), '\n')[0]
   return v:shell_error ? '' : root
 endfunction
 
