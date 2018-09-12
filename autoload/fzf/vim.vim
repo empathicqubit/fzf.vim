@@ -514,14 +514,27 @@ function! fzf#vim#gitfiles(args, ...)
     return s:warn('Not in git repo')
   endif
 
-  let exclude_current = ''
-  if(len(expand('%:p')))
-    let path = substitute(expand('%:p'), expand('$PWD'), '', 0)
-    if(path[0] == '/')
-      let path = substitute(path, '/', '', 0)
-    endif
 
-    let exclude_current = " | grep -v '" . path . "'"
+  let paths = ''
+  for nr in range(1, bufnr('$'))
+    let path = expand('#' . nr . ':p')
+    if(len(path) && bufwinnr(bufname(nr)) != -1)
+      let path = substitute(path, expand('$PWD'), '', 0)
+      if(path[0] == '/')
+        let path = substitute(path, '/', '', 0)
+      endif
+
+      if(len(paths))
+        let paths = paths . '\|' . path
+      else
+        let paths = path
+      endif
+    endif
+  endfor
+
+  let exclude_current = ''
+  if(len(paths))
+    let exclude_current = " | grep -v '" . paths . "'"
   endif
 
   if a:args != '?'
