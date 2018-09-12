@@ -513,9 +513,20 @@ function! fzf#vim#gitfiles(args, ...)
   if empty(root)
     return s:warn('Not in git repo')
   endif
+
+  let exclude_current = ''
+  if(len(expand('%:p')))
+    let path = substitute(expand('%:p'), expand('$PWD'), '', 0)
+    if(path[0] == '/')
+      let path = substitute(path, '/', '', 0)
+    endif
+
+    let exclude_current = " | grep -v '" . path . "'"
+  endif
+
   if a:args != '?'
     return s:fzf('gfiles', {
-    \ 'source':  'git grep --cached -Il "" '.a:args.(s:is_win ? '' : ' | uniq'),
+    \ 'source':  'git grep --cached -Il "" ' . a:args . exclude_current . (s:is_win ? '' : ' | uniq'),
     \ 'dir':     root,
     \ 'options': '-m --prompt "GitFiles> "'
     \}, a:000)
@@ -527,7 +538,7 @@ function! fzf#vim#gitfiles(args, ...)
   let wrapped = fzf#wrap({
   \ 'source':  'git -c color.status=always status --short --untracked-files=all',
   \ 'dir':     root,
-  \ 'options': ['--ansi', '--multi', '--nth', '2..,..', '--tiebreak=index', '--prompt', 'GitFiles?> ', '--preview', 'sh -c "(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -500"']
+  \ 'options': ['--ansi', '--multi', '--nth', '2..,..', '--tiebreak=index', '--prompt', 'GitFiles?> ', '--preview', 'sh -c "(git diff --color=always -- {-1} | sed 1,4d; cat {-1}) | head -500' . exclude_current . '"']
   \})
   call s:remove_layout(wrapped)
   let wrapped.common_sink = remove(wrapped, 'sink*')
