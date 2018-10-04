@@ -539,7 +539,7 @@ function! fzf#vim#gitfiles(args, ...)
 
   if a:args != '?'
     return s:fzf('gfiles', {
-    \ 'source':  'git grep --cached -Il "" ' . a:args . exclude_current . (s:is_win ? '' : ' | uniq'),
+    \ 'source':  '{ git grep --cached -Il "" && git ls-files --others --exclude-standard ; } ' . a:args . exclude_current . (s:is_win ? '' : ' | uniq'),
     \ 'dir':     root,
     \ 'options': '-m --prompt "GitFiles> "'
     \}, a:000)
