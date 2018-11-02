@@ -534,7 +534,7 @@ function! fzf#vim#gitfiles(args, ...)
 
   let exclude_current = ''
   if(len(paths))
-    let exclude_current = " | grep -v '" . paths . "'"
+    let exclude_current = " | grep -x -v '" . paths . "'"
   endif
 
   if a:args != '?'
