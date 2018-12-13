@@ -1,7 +1,7 @@
 " Copyright (c) 2017 Junegunn Choi
 "
 " MIT License
-"
+
 " Permission is hereby granted, free of charge, to any person obtaining
 " a copy of this software and associated documentation files (the
 " "Software"), to deal in the Software without restriction, including
@@ -508,13 +508,7 @@ function! s:get_git_root()
   return v:shell_error ? '' : root
 endfunction
 
-function! fzf#vim#gitfiles(args, ...)
-  let root = s:get_git_root()
-  if empty(root)
-    return s:warn('Not in git repo')
-  endif
-
-
+function! fzf#vim#gitsources(args, ...)
   let paths = ''
   for nr in range(1, bufnr('$'))
     let path = expand('#' . nr . ':p')
@@ -537,9 +531,18 @@ function! fzf#vim#gitfiles(args, ...)
     let exclude_current = " | grep -x -v '" . paths . "'"
   endif
 
+  return '{ git grep --cached -Il "" && git ls-files --others --exclude-standard ; } ' . a:args . exclude_current . (s:is_win ? '' : ' | uniq')
+endfunction
+
+function! fzf#vim#gitfiles(args, ...)
+  let root = s:get_git_root()
+  if empty(root)
+    return s:warn('Not in git repo')
+  endif
+
   if a:args != '?'
     return s:fzf('gfiles', {
-    \ 'source':  '{ git grep --cached -Il "" && git ls-files --others --exclude-standard ; } ' . a:args . exclude_current . (s:is_win ? '' : ' | uniq'),
+    \ 'source':  fzf#vim#gitsources(a:args),
     \ 'dir':     root,
     \ 'options': '-m --prompt "GitFiles> "'
     \}, a:000)
@@ -695,7 +698,14 @@ function! fzf#vim#ag_raw(command_suffix, ...)
   if !executable('ag')
     return s:warn('ag is not found')
   endif
-  return call('fzf#vim#grep', extend(['ag --nogroup --column --color '.a:command_suffix, 1], a:000))
+
+  let root = s:get_git_root()
+  let useignore=''
+  if !empty(root)
+      let useignore=' -U -p '.root.'/.gitignore'
+  endif
+
+  return call('fzf#vim#grep', extend(['ag'.useignore.' --nogroup --column --color '.a:command_suffix, 1], a:000))
 endfunction
 
 " command, with_column, [options]
